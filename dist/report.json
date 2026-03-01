@@ -1,0 +1,62 @@
+{
+  "css": [
+    {
+      "source": "client\\public\\css\\style.css",
+      "output": "client\\public\\dist\\css\\style.min.css",
+      "original_bytes": 24174,
+      "optimized_bytes": 18658,
+      "reduction_percent": 22.82
+    },
+    {
+      "source": "client\\public\\css\\auth.css",
+      "output": "client\\public\\dist\\css\\auth.min.css",
+      "original_bytes": 5886,
+      "optimized_bytes": 4533,
+      "reduction_percent": 22.99
+    },
+    {
+      "source": "client\\public\\css\\dashboard.css",
+      "output": "client\\public\\dist\\css\\dashboard.min.css",
+      "original_bytes": 37178,
+      "optimized_bytes": 29151,
+      "reduction_percent": 21.59
+    }
+  ],
+  "js": [
+    {
+      "source": "client\\public\\js\\main.js",
+      "output": "client\\public\\dist\\js\\main.min.js",
+      "original_bytes": 24646,
+      "optimized_bytes": 23193,
+      "reduction_percent": 5.9
+    },
+    {
+      "source": "client\\public\\js\\brand-auth.js",
+      "output": "client\\public\\dist\\js\\brand-auth.min.js",
+      "original_bytes": 4544,
+      "optimized_bytes": 4288,
+      "reduction_percent": 5.63
+    },
+    {
+      "source": "client\\public\\js\\brand-dashboard.js",
+      "output": "client\\public\\dist\\js\\brand-dashboard.min.js",
+      "original_bytes": 45750,
+      "optimized_bytes": 45004,
+      "reduction_percent": 1.63
+    },
+    {
+      "source": "client\\public\\js\\influencer-auth.js",
+      "output": "client\\public\\dist\\js\\influencer-auth.min.js",
+      "original_bytes": 4555,
+      "optimized_bytes": 4294,
+      "reduction_percent": 5.73
+    },
+    {
+      "source": "client\\public\\js\\influencer-dashboard.js",
+      "output": "client\\public\\dist\\js\\influencer-dashboard.min.js",
+      "original_bytes": 39472,
+      "optimized_bytes": 38725,
+      "reduction_percent": 1.89
+    }
+  ]
+}

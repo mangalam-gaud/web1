@@ -1,0 +1,117 @@
+@media (max-width: 1100px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .subpage-grid,
+    .pricing-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .hero-visual {
+        min-height: 300px;
+    }
+
+    .proof-items {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .features-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .steps-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .persona-grid,
+    .story-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .sub-feature-grid,
+    .matrix-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .cta-inner {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}
+
+@media (max-width: 760px) {
+    .navbar {
+        top: 6px;
+    }
+
+    .navbar .container {
+        flex-direction: column;
+        gap: 0.55rem;
+    }
+
+    .navbar-menu {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-auth-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .hero {
+        padding-top: 4rem;
+    }
+
+    .features-grid,
+    .steps-grid,
+    .proof-items,
+    .footer-content {
+        grid-template-columns: 1fr;
+    }
+
+    .sub-feature-grid,
+    .matrix-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .mini-kpi-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .persona-tabs {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .persona-tab {
+        flex: 1;
+        text-align: center;
+    }
+
+    .faq-question {
+        font-size: 0.96rem;
+    }
+
+    .billing-switch {
+        width: 100%;
+        justify-content: space-between;
+    }
+
+    .billing-btn {
+        flex: 1;
+        text-align: center;
+    }
+
+    .main-card {
+        width: 100%;
+    }
+
+    .float-card {
+        position: static;
+        margin-top: 0.6rem;
+        animation: none;
+    }
+}
+

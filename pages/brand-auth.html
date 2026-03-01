@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brand - Login & Register | Smart Influencing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="auth-container">
+        <nav class="navbar-minimal">
+            <div class="container">
+                <a href="../index.html" class="navbar-brand">
+                    <i class="fas fa-bolt"></i> Smart Influencing
+                </a>
+            </div>
+        </nav>
+
+        <div class="auth-wrapper">
+            <div class="auth-card">
+                <div class="auth-header">
+                    <h2>Brand Account</h2>
+                    <p>Connect with creators and grow your brand</p>
+                </div>
+
+                <!-- Login Form -->
+                <div class="auth-form" id="loginForm">
+                    <h3>Login</h3>
+                    <form onsubmit="handleBrandLogin(event)">
+                        <div class="form-group">
+                            <label for="login-email">Email Address</label>
+                            <input type="email" id="login-email" placeholder="your@brand.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="login-password">Password</label>
+                            <input type="password" id="login-password" placeholder="Enter password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Login</button>
+                    </form>
+                    <p class="auth-switch">Don't have an account? <a href="#" onclick="toggleAuthForm(event)">Sign Up</a></p>
+                </div>
+
+                <!-- Registration Form -->
+                <div class="auth-form hidden" id="registerForm">
+                    <h3>Create Brand Account</h3>
+                    <form onsubmit="handleBrandRegister(event)">
+                        <div class="form-group">
+                            <label for="register-brand-name">Brand Name</label>
+                            <input type="text" id="register-brand-name" placeholder="Your Brand Name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-email">Email Address</label>
+                            <input type="email" id="register-email" placeholder="your@brand.com" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-password">Password</label>
+                            <input type="password" id="register-password" placeholder="Create password" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="register-confirm">Confirm Password</label>
+                            <input type="password" id="register-confirm" placeholder="Confirm password" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary btn-block">Sign Up</button>
+                    </form>
+                    <p class="auth-switch">Already have an account? <a href="#" onclick="toggleAuthForm(event)">Login</a></p>
+                </div>
+
+                <!-- Switch to Influencer -->
+                <div class="auth-footer">
+                    <p>Are you an influencer? <a href="influencer-auth.html">Switch to Influencer Account</a></p>
+                </div>
+            </div>
+
+            <div class="auth-image">
+                <div class="illustration">
+                    <i class="fas fa-chart-line"></i>
+                    <h3>Grow Your Brand</h3>
+                    <p>Collaborate with authentic creators to reach your target audience</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/brand-auth.js"></script>
+    <script>
+        function toggleAuthForm(event) {
+            event.preventDefault();
+            const loginForm = document.getElementById('loginForm');
+            const registerForm = document.getElementById('registerForm');
+            loginForm.classList.toggle('hidden');
+            registerForm.classList.toggle('hidden');
+        }
+    </script>
+</body>
+</html>
+
+

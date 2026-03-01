@@ -1,0 +1,34 @@
+@media (max-width: 1050px) {
+    .auth-wrapper {
+        grid-template-columns: 1fr;
+    }
+
+    .auth-image {
+        min-height: 280px;
+        padding: 1.7rem;
+    }
+}
+
+@media (max-width: 700px) {
+    .navbar-minimal {
+        margin-top: 6px;
+    }
+
+    .auth-card {
+        padding: 1.08rem;
+        border-radius: 18px;
+    }
+
+    .auth-image {
+        border-radius: 18px;
+    }
+
+    .illustration {
+        width: 100%;
+    }
+
+    .illustration h3 {
+        font-size: 1.44rem;
+    }
+}
+

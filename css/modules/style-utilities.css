@@ -1,0 +1,43 @@
+.hidden {
+    display: none !important;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 1.4rem;
+}
+
+.loading {
+    display: inline-block;
+    width: 19px;
+    height: 19px;
+    border-radius: 50%;
+    border: 3px solid #d6e2ee;
+    border-top-color: var(--primary);
+    animation: spin 0.85s linear infinite;
+}
+
+.btn-loading {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+}
+
+.btn-loading .loading {
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.lock-scroll {
+    overflow: hidden;
+}
+
+

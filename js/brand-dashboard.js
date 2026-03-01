@@ -1,0 +1,1046 @@
+// ===========================
+// BRAND DASHBOARD
+// ===========================
+
+let currentUser = null;
+let currentChatId = null;
+let currentChatPartnerId = null;
+let editingCampaignId = null;
+let allInfluencers = [];
+let shortlistedInfluencerIds = new Set();
+
+document.addEventListener('DOMContentLoaded', async function() {
+    // Check authentication
+    currentUser = getUserData();
+    if (!currentUser || currentUser.type !== 'brand') {
+        window.location.href = 'brand-auth.html';
+        return;
+    }
+    
+    // Initialize dashboard
+    initializeDashboard();
+    loadDashboardData();
+    loadBrandCampaigns();
+    loadInfluencers();
+    loadShortlist();
+    loadProfile();
+    loadChats();
+    loadNotifications();
+    setInterval(loadNotifications, 30000);
+});
+
+function initializeDashboard() {
+    const profileImg = document.getElementById('profileImg');
+    if (profileImg) {
+        profileImg.src = getAvatarUrl(currentUser.brand_name);
+    }
+    const heroName = document.getElementById('brandHeroName');
+    if (heroName) {
+        heroName.textContent = currentUser.brand_name || 'Brand';
+    }
+
+    bindLiveSearch('searchInfluencers', '#influencersList .influencer-card', (item) => item.innerText);
+    const ratingFilter = document.getElementById('filterMinRating');
+    const rateFilter = document.getElementById('filterMaxRate');
+    if (ratingFilter) ratingFilter.addEventListener('change', renderInfluencers);
+    if (rateFilter) rateFilter.addEventListener('input', renderInfluencers);
+    bindBrandProfileLivePreview();
+}
+
+function normalizeProgress(value) {
+    const parsed = parseInt(value, 10);
+    if (Number.isNaN(parsed)) return 0;
+    return Math.max(0, Math.min(100, parsed));
+}
+
+function escapeHtml(value) {
+    return String(value || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function getProgressLabel(progress) {
+    if (progress >= 100) return 'Completed';
+    if (progress >= 70) return 'Near Finish';
+    if (progress >= 35) return 'In Progress';
+    if (progress > 0) return 'Started';
+    return 'Not Started';
+}
+
+function getProgressTone(progress) {
+    if (progress >= 100) return 'completed';
+    if (progress >= 70) return 'healthy';
+    if (progress >= 35) return 'active';
+    if (progress > 0) return 'early';
+    return 'stalled';
+}
+
+function getBrandProfileStrengthTier(score) {
+    if (score >= 85) return { label: 'Excellent', tone: 'excellent' };
+    if (score >= 65) return { label: 'Strong', tone: 'strong' };
+    if (score >= 40) return { label: 'Growing', tone: 'growing' };
+    return { label: 'Needs Improvement', tone: 'needs-work' };
+}
+
+function buildBrandProfileState(profile = null) {
+    const fromField = (id) => document.getElementById(id)?.value || '';
+    const source = profile || {
+        brand_name: fromField('editBrandName'),
+        contact: fromField('editContact'),
+        about: fromField('editAbout'),
+        owner_name: fromField('editOwnerName'),
+        owner_linkedin: fromField('editOwnerLinkedin'),
+        instagram: fromField('editInstagram'),
+        facebook: fromField('editFacebook'),
+        twitter: fromField('editTwitter')
+    };
+
+    const state = {
+        brand_name: String(source.brand_name || '').trim(),
+        contact: String(source.contact || '').trim(),
+        about: String(source.about || '').trim(),
+        owner_name: String(source.owner_name || '').trim(),
+        owner_linkedin: String(source.owner_linkedin || '').trim(),
+        instagram: String(source.instagram || '').trim(),
+        facebook: String(source.facebook || '').trim(),
+        twitter: String(source.twitter || '').trim()
+    };
+
+    const completedFields = [
+        state.brand_name,
+        state.contact,
+        state.about,
+        state.owner_name,
+        state.owner_linkedin,
+        state.instagram,
+        state.facebook,
+        state.twitter
+    ].filter(Boolean).length;
+
+    return {
+        ...state,
+        strength: Math.round((completedFields / 8) * 100)
+    };
+}
+
+function updateBrandProfileWidgets(profile = null) {
+    const state = buildBrandProfileState(profile);
+    const tier = getBrandProfileStrengthTier(state.strength);
+    const displayName = state.brand_name || 'Your Brand';
+
+    const strengthValue = document.getElementById('brandProfileStrengthValue');
+    const strengthTier = document.getElementById('brandProfileTier');
+    const strengthBar = document.getElementById('brandProfileStrengthBar');
+    if (strengthValue) strengthValue.textContent = `${state.strength}%`;
+    if (strengthTier) {
+        strengthTier.textContent = tier.label;
+        strengthTier.dataset.tier = tier.tone;
+    }
+    if (strengthBar) {
+        strengthBar.style.width = `${state.strength}%`;
+        strengthBar.dataset.tier = tier.tone;
+    }
+
+    const profileName = document.getElementById('profileName');
+    const profileImageLarge = document.getElementById('profileImageLarge');
+    const profileAvatar = document.getElementById('profileImg');
+    const heroName = document.getElementById('brandHeroName');
+    if (profileName) profileName.textContent = displayName;
+    if (profileImageLarge) profileImageLarge.src = getAvatarUrl(displayName);
+    if (profileAvatar) profileAvatar.src = getAvatarUrl(displayName);
+    if (heroName && state.brand_name) heroName.textContent = state.brand_name;
+
+    const previewName = document.getElementById('brandPreviewBrandName');
+    const previewAbout = document.getElementById('brandPreviewAbout');
+    const previewOwner = document.getElementById('brandPreviewOwner');
+    const previewContact = document.getElementById('brandPreviewContact');
+    const previewInstagram = document.getElementById('brandPreviewInstagram');
+    const previewFacebook = document.getElementById('brandPreviewFacebook');
+    const previewLinkedin = document.getElementById('brandPreviewLinkedin');
+    const previewTwitter = document.getElementById('brandPreviewTwitter');
+
+    if (previewName) previewName.textContent = displayName;
+    if (previewAbout) previewAbout.textContent = state.about || 'Add your brand story to attract better-fit creators.';
+    if (previewOwner) previewOwner.textContent = state.owner_name || 'Not set';
+    if (previewContact) previewContact.textContent = state.contact || 'Not set';
+    if (previewInstagram) previewInstagram.textContent = `Instagram: ${state.instagram || 'Not linked'}`;
+    if (previewFacebook) previewFacebook.textContent = `Facebook: ${state.facebook || 'Not linked'}`;
+    if (previewLinkedin) previewLinkedin.textContent = `LinkedIn: ${state.owner_linkedin || 'Not linked'}`;
+    if (previewTwitter) previewTwitter.textContent = `Twitter: ${state.twitter || 'Not linked'}`;
+}
+
+function bindBrandProfileLivePreview() {
+    const form = document.querySelector('#profile-tab .profile-form');
+    if (!form || form.dataset.previewBound === 'true') {
+        return;
+    }
+
+    const inputIds = [
+        'editBrandName',
+        'editContact',
+        'editAbout',
+        'editOwnerName',
+        'editOwnerLinkedin',
+        'editInstagram',
+        'editFacebook',
+        'editTwitter'
+    ];
+
+    inputIds.forEach((id) => {
+        const field = document.getElementById(id);
+        if (field) {
+            field.addEventListener('input', () => updateBrandProfileWidgets());
+        }
+    });
+
+    form.dataset.previewBound = 'true';
+}
+
+const campaignTemplates = {
+    'product-launch': {
+        field: 'Product Launch',
+        overview: 'Launch campaign focused on product unboxing, feature highlights, and conversion-driven CTA.',
+        work_details: 'Deliverables: 1 Reel, 3 Story frames, 1 static post. Include demo, key benefits, and discount code.',
+        duration: '2 weeks'
+    },
+    'ugc-growth': {
+        field: 'UGC Growth',
+        overview: 'Collect authentic user-generated content that can be repurposed across paid and organic channels.',
+        work_details: 'Deliverables: 3 UGC videos, usage rights for ads, optional hooks for A/B tests.',
+        duration: '3 weeks'
+    },
+    'brand-awareness': {
+        field: 'Brand Awareness',
+        overview: 'Reach new audiences and improve brand recall through high-engagement creator storytelling.',
+        work_details: 'Deliverables: 1 hero video, 2 story sets, campaign hashtag integration, brand mention guidelines.',
+        duration: '1 month'
+    },
+    'event-promo': {
+        field: 'Event Promotion',
+        overview: 'Promote an upcoming launch/event and drive RSVP or ticket conversions.',
+        work_details: 'Deliverables: pre-event teaser, event-day coverage, post-event recap content.',
+        duration: '10 days'
+    }
+};
+
+function applyCampaignTemplate() {
+    const templateKey = document.getElementById('campaignTemplate')?.value;
+    if (!templateKey || !campaignTemplates[templateKey]) {
+        showNotification('Select a template to apply', 'warning');
+        return;
+    }
+
+    const template = campaignTemplates[templateKey];
+    document.getElementById('campaignField').value = template.field;
+    document.getElementById('campaignOverview').value = template.overview;
+    document.getElementById('campaignWorkDetails').value = template.work_details;
+    document.getElementById('campaignDuration').value = template.duration;
+    showNotification('Template applied', 'success');
+}
+
+function renderCampaignProgressSummary(campaign) {
+    const avgProgress = normalizeProgress(campaign.avg_progress);
+    const acceptedCount = parseInt(campaign.accepted_count, 10) || 0;
+    const completedCount = parseInt(campaign.completed_influencers, 10) || 0;
+    const completionRate = acceptedCount > 0 ? Math.round((completedCount / acceptedCount) * 100) : 0;
+    const tone = getProgressTone(avgProgress);
+
+    return `
+        <div class="campaign-progress-summary ${tone}">
+            <div class="progress-label-row">
+                <span>Creator Delivery Progress</span>
+                <strong>${avgProgress}%</strong>
+            </div>
+            <div class="progress-track"><span style="width:${avgProgress}%"></span></div>
+            <div class="campaign-progress-meta">
+                <span>${getProgressLabel(avgProgress)}</span>
+                <span>${completedCount}/${acceptedCount} completed (${completionRate}%)</span>
+            </div>
+        </div>
+    `;
+}
+
+function renderApplicantProgress(app) {
+    const progress = normalizeProgress(app.progress);
+    const updatedText = app.progress_updated_at ? `${formatDate(app.progress_updated_at)} ${formatTime(app.progress_updated_at)}` : 'No updates yet';
+    const note = app.progress_note ? escapeHtml(app.progress_note) : 'No note shared by influencer yet.';
+    const tone = getProgressTone(progress);
+
+    return `
+        <div class="application-progress-block ${tone}">
+            <div class="progress-label-row">
+                <span>Campaign Progress</span>
+                <strong>${progress}%</strong>
+            </div>
+            <div class="progress-track"><span style="width:${progress}%"></span></div>
+            <p class="progress-note-preview">${note}</p>
+            <p class="progress-meta-text">Last update: ${updatedText}</p>
+        </div>
+    `;
+}
+
+async function loadDashboardData() {
+    try {
+        const profileResponse = await apiCall(`brand/profile/${currentUser.id}`);
+        const campaignsResponse = await apiCall(`campaign/my-campaigns/${currentUser.id}`);
+
+        if (profileResponse.status === 'success') {
+            const heroName = document.getElementById('brandHeroName');
+            if (heroName) {
+                heroName.textContent = profileResponse.data.brand_name || currentUser.brand_name || 'Brand';
+            }
+        }
+        
+        if (campaignsResponse.status === 'success') {
+            const campaigns = campaignsResponse.data;
+            const active = campaigns.filter(c => c.status === 'active').length;
+            let totalApps = 0;
+            let acceptedCount = 0;
+            
+            campaigns.forEach(c => {
+                totalApps += parseInt(c.total_applications) || 0;
+                acceptedCount += parseInt(c.accepted_count) || 0;
+            });
+            
+            animateCount(document.getElementById('activeCampaigns'), active);
+            animateCount(document.getElementById('totalApplications'), totalApps);
+            animateCount(document.getElementById('acceptedInfluencers'), acceptedCount);
+            animateCount(document.getElementById('brandHeroActive'), active);
+            animateCount(document.getElementById('brandHeroApps'), totalApps);
+            animateCount(document.getElementById('brandHeroAccept'), acceptedCount);
+
+            const acceptanceRate = totalApps > 0 ? Math.round((acceptedCount / totalApps) * 100) : 0;
+            const activityRate = campaigns.length > 0 ? Math.round((active / campaigns.length) * 100) : 0;
+            const acceptanceBar = document.getElementById('brandAcceptanceBar');
+            const activityBar = document.getElementById('brandActivityBar');
+            const acceptanceText = document.getElementById('brandAcceptanceText');
+            const activityText = document.getElementById('brandActivityText');
+            if (acceptanceBar) acceptanceBar.style.width = `${acceptanceRate}%`;
+            if (activityBar) activityBar.style.width = `${activityRate}%`;
+            if (acceptanceText) acceptanceText.textContent = `${acceptanceRate}%`;
+            if (activityText) activityText.textContent = `${activityRate}%`;
+
+            const campaignCount = campaigns.length;
+            const pendingReview = Math.max(totalApps - acceptedCount, 0);
+            const totalAvgProgress = campaigns.reduce((sum, campaign) => {
+                return sum + normalizeProgress(campaign.avg_progress);
+            }, 0);
+            const avgDeliveryProgress = campaignCount > 0 ? Math.round(totalAvgProgress / campaignCount) : 0;
+            const onTrackCampaigns = campaigns.filter(campaign => normalizeProgress(campaign.avg_progress) >= 70).length;
+            const onTrackRate = campaignCount > 0 ? Math.round((onTrackCampaigns / campaignCount) * 100) : 0;
+
+            animateCount(document.getElementById('brandFunnelCampaigns'), campaignCount);
+            animateCount(document.getElementById('brandFunnelApplications'), totalApps);
+            animateCount(document.getElementById('brandFunnelAccepted'), acceptedCount);
+            animateCount(document.getElementById('brandFunnelPending'), pendingReview);
+
+            const onTrackBar = document.getElementById('brandOnTrackBar');
+            const onTrackText = document.getElementById('brandOnTrackText');
+            const deliveryBar = document.getElementById('brandDeliveryBar');
+            const deliveryText = document.getElementById('brandDeliveryText');
+            if (onTrackBar) onTrackBar.style.width = `${onTrackRate}%`;
+            if (onTrackText) onTrackText.textContent = `${onTrackRate}%`;
+            if (deliveryBar) deliveryBar.style.width = `${avgDeliveryProgress}%`;
+            if (deliveryText) deliveryText.textContent = `${avgDeliveryProgress}%`;
+            
+            // Show recent campaigns
+            const recent = campaigns.slice(0, 2);
+            const recentContainer = document.getElementById('recentCampaigns');
+            if (recent.length > 0) {
+                recentContainer.innerHTML = recent.map(campaign => `
+                    <div class="campaign-card">
+                        <div class="campaign-card-header">
+                            <h3>${escapeHtml(campaign.field)}</h3>
+                            <p>Applications: ${escapeHtml(campaign.total_applications)}</p>
+                        </div>
+                        <div class="campaign-card-body">
+                            <div class="campaign-info">
+                                <div class="campaign-info-item">
+                                    <span class="campaign-info-label">Status</span>
+                                    <span class="campaign-info-value">${escapeHtml(campaign.status)}</span>
+                                </div>
+                                <div class="campaign-info-item">
+                                    <span class="campaign-info-label">Budget</span>
+                                    <span class="campaign-info-value">${formatCurrency(campaign.payout)}</span>
+                                </div>
+                            </div>
+                            ${renderCampaignProgressSummary(campaign)}
+                            <div class="campaign-actions">
+                                <button class="btn btn-secondary btn-sm" onclick="viewCampaignApplicants(${campaign.id})">View Applications</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteCampaign(${campaign.id})">Delete</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                recentContainer.innerHTML = '<p class="empty-state">No campaigns created yet</p>';
+            }
+        }
+    } catch (error) {
+        console.error('Error loading dashboard:', error);
+    }
+}
+
+async function loadBrandCampaigns() {
+    try {
+        const response = await apiCall(`campaign/my-campaigns/${currentUser.id}`);
+        const campaignsList = document.getElementById('campaignsList');
+        
+        if (response.status === 'success') {
+            const campaigns = response.data;
+            if (campaigns.length === 0) {
+                campaignsList.innerHTML = '<p class="empty-state">No campaigns created yet</p>';
+                return;
+            }
+            
+            campaignsList.innerHTML = campaigns.map(campaign => `
+                <div class="campaign-card">
+                    <div class="campaign-card-header">
+                        <h3>${escapeHtml(campaign.field)}</h3>
+                        <p>Created: ${formatDate(campaign.created_at)}</p>
+                    </div>
+                    <div class="campaign-card-body">
+                        <p>${escapeHtml(campaign.overview ? campaign.overview.substring(0, 100) : '')}...</p>
+                        <div class="campaign-info">
+                            <div class="campaign-info-item">
+                                <span class="campaign-info-label">Duration</span>
+                                <span class="campaign-info-value">${escapeHtml(campaign.duration || 'N/A')}</span>
+                            </div>
+                            <div class="campaign-info-item">
+                                <span class="campaign-info-label">Applications</span>
+                                <span class="campaign-info-value">${escapeHtml(campaign.total_applications)}</span>
+                            </div>
+                            <div class="campaign-info-item">
+                                <span class="campaign-info-label">Budget</span>
+                                <span class="campaign-info-value">${formatCurrency(campaign.payout)}</span>
+                            </div>
+                        </div>
+                        ${renderCampaignProgressSummary(campaign)}
+                        <div class="campaign-actions">
+                            <button class="btn btn-primary btn-sm" onclick="viewCampaignApplicants(${campaign.id})">View Applications</button>
+                            <button class="btn btn-secondary btn-sm" onclick="editCampaign(${campaign.id})">Edit</button>
+                            <button class="btn btn-danger btn-sm" onclick="deleteCampaign(${campaign.id})">Delete</button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    } catch (error) {
+        console.error('Error loading campaigns:', error);
+        document.getElementById('campaignsList').innerHTML = '<p class="empty-state">Error loading campaigns</p>';
+    }
+}
+
+async function handleCreateCampaign(event) {
+    event.preventDefault();
+    
+    try {
+        const payload = {
+            brand_id: currentUser.id,
+            field: document.getElementById('campaignField').value,
+            overview: document.getElementById('campaignOverview').value,
+            work_details: document.getElementById('campaignWorkDetails').value,
+            duration: document.getElementById('campaignDuration').value,
+            payout: parseFloat(document.getElementById('campaignPayout').value) || 0
+        };
+
+        const endpoint = editingCampaignId ? `campaign/update/${editingCampaignId}` : 'campaign/create';
+        const method = editingCampaignId ? 'PUT' : 'POST';
+        const response = await apiCall(endpoint, method, payload);
+        
+        if (response.status === 'success') {
+            showNotification(editingCampaignId ? 'Campaign updated successfully!' : 'Campaign created successfully!', 'success');
+            resetCampaignForm();
+            loadBrandCampaigns();
+            loadDashboardData();
+            switchTab('campaigns');
+        } else {
+            showNotification(response.message || 'Failed to save campaign', 'error');
+        }
+    } catch (error) {
+        showNotification(error.message || 'Failed to save campaign', 'error');
+    }
+}
+
+async function viewCampaignApplicants(campaignId) {
+    try {
+        const response = await apiCall(`campaign/applicants/${campaignId}`);
+        
+        if (response.status === 'success') {
+            const modal = document.getElementById('campaignModal');
+            const details = document.getElementById('campaignModalDetails');
+            const applicants = response.data;
+            
+            if (applicants.length === 0) {
+                details.innerHTML = '<p class="empty-state">No applications yet</p>';
+            } else {
+                details.innerHTML = `
+                    <h2>Campaign Applications</h2>
+                    <div class="applicants-list">
+                        ${applicants.map(app => `
+                            <div class="applicant-card">
+                                <div class="applicant-header">
+                                    <img src="${getAvatarUrl(app.name)}" alt="${app.name}">
+                                    <div class="applicant-info">
+                                        <h3>${app.name}</h3>
+                                        <p>Rating: ${app.rating}</p>
+                                    </div>
+                                </div>
+                                <div class="applicant-details">
+                                    <p>${app.about}</p>
+                                    <div class="applicant-meta">
+                                        <span>Rate: ${formatCurrency(app.hourly_rate)}</span>
+                                        <span>Status: <span class="status-chip status-${app.status}">${app.status}</span></span>
+                                    </div>
+                                </div>
+                                ${renderApplicantProgress(app)}
+                                <div class="applicant-actions">
+                                    ${app.status === 'waiting' ? `
+                                        <button class="btn btn-success btn-sm" onclick="updateApplicationStatus(${app.id}, 'accepted', ${campaignId}, event)">Accept</button>
+                                        <button class="btn btn-danger btn-sm" onclick="updateApplicationStatus(${app.id}, 'rejected', ${campaignId}, event)">Reject</button>
+                                    ` : `
+                                        <button class="btn btn-secondary btn-sm" disabled>${app.status === 'accepted' ? 'Accepted' : 'Rejected'}</button>
+                                    `}
+                                    <button class="btn btn-secondary btn-sm" onclick="closeCampaignModal(); viewInfluencerDetails(${app.influencer_id})">View Profile</button>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            }
+            
+            modal.classList.remove('hidden');
+        }
+    } catch (error) {
+        showNotification('Error loading applicants', 'error');
+    }
+}
+
+async function updateApplicationStatus(applicationId, status, campaignId, event) {
+    event.preventDefault();
+    
+    try {
+        const response = await apiCall(`campaign/application/${applicationId}`, 'PUT', {
+            status: status
+        });
+        
+        if (response.status === 'success') {
+            showNotification(`Application ${status} successfully!`, 'success');
+            event.target.disabled = true;
+            viewCampaignApplicants(campaignId);
+            loadBrandCampaigns();
+            loadDashboardData();
+        } else {
+            showNotification(response.message || 'Failed to update status', 'error');
+        }
+    } catch (error) {
+        showNotification(error.message || 'Failed to update status', 'error');
+    }
+}
+
+async function loadInfluencers() {
+    try {
+        const response = await apiCall('brand/influencers');
+
+        if (response.status === 'success') {
+            allInfluencers = response.data || [];
+            animateCount(document.getElementById('totalInfluencersStat'), allInfluencers.length);
+            renderInfluencers();
+        }
+    } catch (error) {
+        console.error('Error loading influencers:', error);
+        document.getElementById('influencersList').innerHTML = '<p class="empty-state">Error loading influencers</p>';
+    }
+}
+
+function getFilteredInfluencers() {
+    const minRating = parseFloat(document.getElementById('filterMinRating')?.value || '');
+    const maxRate = parseFloat(document.getElementById('filterMaxRate')?.value || '');
+    return allInfluencers.filter((inf) => {
+        const rating = parseFloat(inf.rating || 0);
+        const rate = parseFloat(inf.hourly_rate || 0);
+        if (!Number.isNaN(minRating) && rating < minRating) return false;
+        if (!Number.isNaN(maxRate) && rate > maxRate) return false;
+        return true;
+    });
+}
+
+function renderInfluencers() {
+    const influencersList = document.getElementById('influencersList');
+    if (!influencersList) return;
+
+    const influencers = getFilteredInfluencers();
+    if (influencers.length === 0) {
+        influencersList.innerHTML = '<p class="empty-state">No influencers found for selected filters</p>';
+        return;
+    }
+
+    influencersList.innerHTML = influencers.map(inf => {
+        const isSaved = shortlistedInfluencerIds.has(Number(inf.id));
+        return `
+            <div class="influencer-card" onclick="viewInfluencerDetails(${inf.id})">
+                <div class="influencer-card-header">
+                    <img src="${getAvatarUrl(escapeHtml(inf.name))}" alt="${escapeHtml(inf.name)}" class="influencer-avatar">
+                    <h3>${escapeHtml(inf.name)}</h3>
+                    <p>${escapeHtml(inf.rating)} &#9733;</p>
+                </div>
+                <div class="influencer-card-body">
+                    <p>${escapeHtml(inf.about ? inf.about.substring(0, 100) + '...' : 'No bio')}</p>
+                    <div class="influencer-item">
+                        <span class="influencer-item-label">Rate:</span>
+                        <span class="influencer-item-value">${formatCurrency(inf.hourly_rate)}</span>
+                    </div>
+                    <div class="influencer-item">
+                        <span class="influencer-item-label">Followers:</span>
+                        <span class="influencer-item-value">Multiple Platforms</span>
+                    </div>
+                    <div class="campaign-actions">
+                        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); toggleShortlist(${inf.id}, this)">${isSaved ? 'Remove Shortlist' : 'Save Shortlist'}</button>
+                        <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); viewInfluencerDetails(${inf.id})">Open Profile</button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+async function loadShortlist() {
+    try {
+        const response = await apiCall(`brand/shortlist/${currentUser.id}`);
+        if (response.status !== 'success') return;
+
+        const shortlist = response.data || [];
+        shortlistedInfluencerIds = new Set(shortlist.map(item => Number(item.influencer_id)));
+        renderShortlist(shortlist);
+        renderInfluencers();
+    } catch (error) {
+        console.error('Error loading shortlist:', error);
+    }
+}
+
+function renderShortlist(shortlist) {
+    const shortlistList = document.getElementById('shortlistList');
+    if (!shortlistList) return;
+
+    if (!shortlist || shortlist.length === 0) {
+        shortlistList.innerHTML = '<p class="empty-state">No influencers in your shortlist yet</p>';
+        return;
+    }
+
+    shortlistList.innerHTML = shortlist.map(item => `
+        <div class="influencer-card" onclick="viewInfluencerDetails(${item.influencer_id})">
+            <div class="influencer-card-header">
+                <img src="${getAvatarUrl(escapeHtml(item.name))}" alt="${escapeHtml(item.name)}" class="influencer-avatar">
+                <h3>${escapeHtml(item.name)}</h3>
+                <p>${escapeHtml(item.rating)} &#9733;</p>
+            </div>
+            <div class="influencer-card-body">
+                <p>${escapeHtml(item.about ? item.about.substring(0, 110) + '...' : 'No bio')}</p>
+                <div class="influencer-item">
+                    <span class="influencer-item-label">Rate:</span>
+                    <span class="influencer-item-value">${formatCurrency(item.hourly_rate)}</span>
+                </div>
+                <div class="campaign-actions">
+                    <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation(); toggleShortlist(${item.influencer_id}, this)">Remove</button>
+                    <button class="btn btn-primary btn-sm" onclick="event.stopPropagation(); viewInfluencerDetails(${item.influencer_id})">View Profile</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function toggleShortlist(influencerId, button) {
+    try {
+        if (button) setButtonLoading(button, true, 'Saving...');
+        const response = await apiCall('brand/shortlist/toggle', 'POST', { influencer_id: influencerId });
+        if (response.status === 'success') {
+            showNotification(response.data.action === 'added' ? 'Added to shortlist' : 'Removed from shortlist', 'success');
+            await loadShortlist();
+        } else {
+            showNotification(response.message || 'Failed to update shortlist', 'error');
+        }
+    } catch (error) {
+        showNotification(error.message || 'Failed to update shortlist', 'error');
+    } finally {
+        if (button) setButtonLoading(button, false);
+    }
+}
+
+async function viewInfluencerDetails(influencerId) {
+    try {
+        const response = await apiCall(`influencer/profile/${influencerId}`);
+        
+        if (response.status === 'success') {
+            const modal = document.getElementById('influencerModal');
+            const details = document.getElementById('influencerDetails');
+            const inf = response.data;
+            
+                details.innerHTML = `
+                <div class="influencer-modal-content">
+                    <img src="${getAvatarUrl(escapeHtml(inf.name))}" alt="${escapeHtml(inf.name)}" style="width: 100px; height: 100px; border-radius: 50%; display: block; margin: 0 auto 1rem;">
+                    <h2>${escapeHtml(inf.name)}</h2>
+                    <p style="text-align: center; color: var(--gray); margin-bottom: 1.5rem;">Rating: ${escapeHtml(inf.rating)} &#9733;</p>
+                    
+                    <div class="modal-section">
+                        <h3>About</h3>
+                        <p>${escapeHtml(inf.about || 'No bio available')}</p>
+                    </div>
+                    
+                    ${inf.experience ? `
+                        <div class="modal-section">
+                            <h3>Experience</h3>
+                            <p>${escapeHtml(inf.experience)}</p>
+                        </div>
+                    ` : ''}
+                    
+                    <div class="modal-info">
+                        <div class="info-item">
+                            <label>Hourly Rate</label>
+                            <p>${formatCurrency(inf.hourly_rate)}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>Contact</label>
+                            <p>${escapeHtml(inf.contact || 'N/A')}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-info">
+                        <div class="info-item">
+                            <label>Instagram</label>
+                            <p>${inf.instagram ? `<a href="#">${escapeHtml(inf.instagram)}</a>` : 'N/A'}</p>
+                        </div>
+                        <div class="info-item">
+                            <label>YouTube</label>
+                            <p>${inf.youtube ? `<a href="#">${escapeHtml(inf.youtube)}</a>` : 'N/A'}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="initiateChat(${influencerId}, decodeURIComponent('${encodeURIComponent(inf.name || '')}'))">Send Message</button>
+                        <button class="btn btn-secondary" onclick="closeInfluencerModal()">Close</button>
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+        }
+    } catch (error) {
+        showNotification('Error loading influencer details', 'error');
+    }
+}
+
+async function loadProfile() {
+    try {
+        const response = await apiCall(`brand/profile/${currentUser.id}`);
+        
+        if (response.status === 'success') {
+            const profile = response.data;
+            const brandName = profile.brand_name || currentUser.brand_name || 'Your Brand';
+            const email = profile.email || currentUser.email || '';
+            
+            // Set profile display
+            document.getElementById('profileName').textContent = brandName;
+            document.getElementById('profileEmail').textContent = email;
+            document.getElementById('profileImageLarge').src = getAvatarUrl(brandName);
+            const profileImg = document.getElementById('profileImg');
+            if (profileImg) {
+                profileImg.src = getAvatarUrl(brandName);
+            }
+            const heroName = document.getElementById('brandHeroName');
+            if (heroName) {
+                heroName.textContent = brandName;
+            }
+            currentUser.brand_name = brandName;
+            
+            // Set form fields
+            document.getElementById('editBrandName').value = brandName;
+            document.getElementById('editContact').value = profile.contact || '';
+            document.getElementById('editAbout').value = profile.about || '';
+            document.getElementById('editOwnerName').value = profile.owner_name || '';
+            document.getElementById('editOwnerLinkedin').value = profile.owner_linkedin || '';
+            document.getElementById('editInstagram').value = profile.instagram || '';
+            document.getElementById('editFacebook').value = profile.facebook || '';
+            document.getElementById('editTwitter').value = profile.twitter || '';
+
+            bindBrandProfileLivePreview();
+            updateBrandProfileWidgets(profile);
+        }
+    } catch (error) {
+        console.error('Error loading profile:', error);
+    }
+}
+
+async function handleProfileUpdate(event) {
+    event.preventDefault();
+    
+    try {
+        const updateData = {
+            brand_name: document.getElementById('editBrandName').value.trim(),
+            contact: document.getElementById('editContact').value.trim(),
+            about: document.getElementById('editAbout').value.trim(),
+            owner_name: document.getElementById('editOwnerName').value.trim(),
+            owner_linkedin: document.getElementById('editOwnerLinkedin').value.trim(),
+            instagram: document.getElementById('editInstagram').value.trim(),
+            facebook: document.getElementById('editFacebook').value.trim(),
+            twitter: document.getElementById('editTwitter').value.trim()
+        };
+        
+        const response = await apiCall(`brand/profile/${currentUser.id}`, 'PUT', updateData);
+        
+        if (response.status === 'success') {
+            showNotification('Profile updated successfully!', 'success');
+            loadProfile();
+        } else {
+            showNotification(response.message || 'Failed to update profile', 'error');
+        }
+    } catch (error) {
+        showNotification(error.message || 'Failed to update profile', 'error');
+    }
+}
+
+async function loadChats() {
+    try {
+        const response = await apiCall(`chat/list/${currentUser.id}?type=brand`);
+        const chatsList = document.getElementById('chatsList');
+        
+        if (response.status === 'success' && response.data.length > 0) {
+            chatsList.innerHTML = response.data.map(chat => `
+                <div class="chat-item">
+                    <div class="chat-item-body">
+                        <div class="chat-item-title">${chat.name}</div>
+                        <div class="chat-item-preview">${chat.unread_count > 0 ? `${chat.unread_count} new messages` : 'No new messages'}</div>
+                    </div>
+                    <div class="chat-item-actions">
+                        <button class="btn btn-primary btn-sm" onclick="openChat(${chat.influencer_id}, decodeURIComponent('${encodeURIComponent(chat.name || '')}'))">Message</button>
+                        <button class="btn btn-secondary btn-sm" onclick="viewInfluencerDetails(${chat.influencer_id})">View Profile</button>
+                    </div>
+                </div>
+            `).join('');
+        } else {
+            chatsList.innerHTML = '<p class="empty-state">No conversations yet</p>';
+        }
+    } catch (error) {
+        console.error('Error loading chats:', error);
+    }
+}
+
+async function openChat(influencerId, influencerName) {
+    try {
+        const response = await apiCall('chat/get', 'POST', {
+            influencer_id: influencerId,
+            brand_id: currentUser.id
+        });
+        
+        if (response.status === 'success') {
+            currentChatId = response.data.chat_id;
+            currentChatPartnerId = influencerId;
+            
+            document.getElementById('noChat').classList.add('hidden');
+            document.getElementById('chatBox').classList.remove('hidden');
+            document.getElementById('chatTitle').textContent = influencerName;
+            const profileBtn = document.getElementById('chatProfileBtn');
+            if (profileBtn) {
+                profileBtn.classList.remove('hidden');
+                profileBtn.disabled = false;
+            }
+            
+            loadMessages();
+        }
+    } catch (error) {
+        showNotification('Error opening chat', 'error');
+    }
+}
+
+async function loadMessages() {
+    try {
+        const response = await apiCall(`chat/messages/${currentChatId}`);
+        const messagesContainer = document.getElementById('messagesContainer');
+        
+        if (response.status === 'success') {
+            messagesContainer.innerHTML = response.data.map(msg => `
+                <div class="message ${msg.sender_id === currentUser.id ? 'sent' : 'received'}">
+                    <div class="message-content">${escapeHtml(msg.message)}</div>
+                </div>
+            `).join('');
+            
+            messagesContainer.scrollTop = messagesContainer.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error loading messages:', error);
+    }
+}
+
+async function handleSendMessage(event) {
+    event.preventDefault();
+    
+    const messageInput = document.getElementById('messageInput');
+    const message = messageInput.value.trim();
+    
+    if (!message) return;
+    
+    try {
+        const response = await apiCall('chat/message', 'POST', {
+            chat_id: currentChatId,
+            sender_id: currentUser.id,
+            sender_type: 'brand',
+            message: message
+        });
+        
+        if (response.status === 'success') {
+            messageInput.value = '';
+            loadMessages();
+        }
+    } catch (error) {
+        showNotification('Failed to send message', 'error');
+    }
+}
+
+async function initiateChat(influencerId, influencerName) {
+    closeInfluencerModal();
+    await openChat(influencerId, influencerName);
+    switchTab('messages');
+}
+
+function openActiveChatProfile() {
+    if (!currentChatPartnerId) {
+        showNotification('Select a conversation first', 'warning');
+        return;
+    }
+    viewInfluencerDetails(currentChatPartnerId);
+}
+
+function editCampaign(campaignId) {
+    startCampaignEdit(campaignId);
+}
+
+async function startCampaignEdit(campaignId) {
+    try {
+        const response = await apiCall(`campaign/details/${campaignId}`);
+        if (response.status !== 'success') {
+            showNotification(response.message || 'Unable to load campaign details', 'error');
+            return;
+        }
+
+        const campaign = response.data;
+        editingCampaignId = campaignId;
+        document.getElementById('campaignField').value = campaign.field || '';
+        document.getElementById('campaignOverview').value = campaign.overview || '';
+        document.getElementById('campaignWorkDetails').value = campaign.work_details || '';
+        document.getElementById('campaignDuration').value = campaign.duration || '';
+        document.getElementById('campaignPayout').value = campaign.payout || 0;
+        const template = document.getElementById('campaignTemplate');
+        if (template) template.value = '';
+
+        const title = document.getElementById('campaignFormTitle');
+        const submitBtn = document.getElementById('campaignSubmitBtn');
+        const cancelBtn = document.getElementById('campaignCancelEditBtn');
+        if (title) title.textContent = 'Edit Campaign';
+        if (submitBtn) submitBtn.textContent = 'Save Changes';
+        if (cancelBtn) cancelBtn.classList.remove('hidden');
+
+        switchTab('create-campaign');
+    } catch (error) {
+        showNotification(error.message || 'Unable to load campaign for editing', 'error');
+    }
+}
+
+async function loadNotifications() {
+    try {
+        const response = await apiCall(`notification/list/${currentUser.id}?type=brand`);
+        const container = document.getElementById('notificationsList');
+        const badge = document.getElementById('notifBadge');
+        if (response.status !== 'success') return;
+
+        const list = response.data || [];
+        const unread = response.meta?.unread_count || 0;
+        if (badge) {
+            badge.textContent = unread;
+            badge.style.display = unread > 0 ? 'inline-block' : 'none';
+        }
+
+        if (!container) return;
+        if (list.length === 0) {
+            container.innerHTML = '<p class="empty-state">No notifications yet</p>';
+            return;
+        }
+
+        container.innerHTML = list.map(item => `
+            <div class="notification-item ${item.is_read ? '' : 'notification-unread'}">
+                <div class="notification-item-head">
+                    <h4>${escapeHtml(item.title)}</h4>
+                    <small>${formatDate(item.created_at)} ${formatTime(item.created_at)}</small>
+                </div>
+                <p>${escapeHtml(item.message)}</p>
+                ${item.is_read ? '' : `<button class="btn btn-secondary btn-sm" onclick="markNotificationRead(${item.id}, this)">Mark Read</button>`}
+            </div>
+        `).join('');
+    } catch (error) {
+        console.error('Error loading notifications:', error);
+    }
+}
+
+async function markNotificationRead(notificationId, button) {
+    try {
+        if (button) setButtonLoading(button, true, 'Updating...');
+        await apiCall(`notification/read/${notificationId}`, 'PUT', {});
+        loadNotifications();
+    } catch (error) {
+        showNotification(error.message || 'Unable to mark notification', 'error');
+    } finally {
+        if (button) setButtonLoading(button, false);
+    }
+}
+
+async function markAllNotificationsRead() {
+    try {
+        await apiCall('notification/read-all', 'PUT', {});
+        loadNotifications();
+    } catch (error) {
+        showNotification(error.message || 'Unable to mark notifications', 'error');
+    }
+}
+
+function resetCampaignForm() {
+    const form = document.querySelector('.campaign-form');
+    if (form) form.reset();
+    editingCampaignId = null;
+    const template = document.getElementById('campaignTemplate');
+    if (template) template.value = '';
+
+    const title = document.getElementById('campaignFormTitle');
+    const submitBtn = document.getElementById('campaignSubmitBtn');
+    const cancelBtn = document.getElementById('campaignCancelEditBtn');
+    if (title) title.textContent = 'Create New Campaign';
+    if (submitBtn) submitBtn.textContent = 'Create Campaign';
+    if (cancelBtn) cancelBtn.classList.add('hidden');
+}
+
+function cancelCampaignEdit() {
+    resetCampaignForm();
+}
+
+function goToCreateCampaign() {
+    if (!editingCampaignId) {
+        resetCampaignForm();
+    }
+    switchTab('create-campaign');
+}
+
+async function deleteCampaign(campaignId) {
+    if (!confirm('Are you sure you want to delete this campaign?')) {
+        return;
+    }
+
+    try {
+        await apiCall(`campaigns/${campaignId}`, 'DELETE');
+        showNotification('Campaign deleted successfully!', 'success');
+        loadBrandCampaigns();
+        loadDashboardData();
+    } catch (error) {
+        showNotification(error.message || 'Failed to delete campaign', 'error');
+    }
+}
+

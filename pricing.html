@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pricing | Smart Influencing</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+  />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <div class="app-shell">
+    <div class="bg-orb orb-1"></div>
+    <div class="bg-orb orb-2"></div>
+    <div class="bg-grid"></div>
+
+    <nav class="navbar">
+      <div class="container">
+        <div class="navbar-brand">
+          <h1>
+            <i class="fas fa-bolt"></i> Smart Influencing
+          </h1>
+        </div>
+        <div class="navbar-menu">
+          <a class="nav-link" href="./home.html">Home</a>
+          <a class="nav-link" href="./brand-suite.html">Brand Suite</a>
+          <a class="nav-link" href="./creator-suite.html">Creator Suite</a>
+          <a class="nav-link active" href="./pricing.html">Pricing</a>
+          <a href="./pages/influencer-auth.html" class="btn btn-ghost nav-auth-btn">
+            <i class="fas fa-user"></i> Influencer Login
+          </a>
+          <a href="./pages/brand-auth.html" class="btn btn-primary nav-auth-btn">
+            <i class="fas fa-building"></i> Brand Login
+          </a>
+        </div>
+      </div>
+    </nav>
+
+    <main>
+      <div class="page pricing-page">
+        <section class="subpage-hero pricing-hero">
+          <div class="container">
+            <div class="section-head">
+              <p class="eyebrow">Pricing</p>
+              <h2>Choose a plan that matches your collaboration volume</h2>
+            </div>
+            <div class="billing-switch">
+              <button type="button" class="billing-btn active" data-mode="monthly">
+                Monthly
+              </button>
+              <button type="button" class="billing-btn" data-mode="yearly">
+                Yearly (Save 20%)
+              </button>
+            </div>
+            <div class="pricing-grid">
+              <!-- Starter Plan -->
+              <article class="price-card">
+                <h3>Starter</h3>
+                <p class="price-tag">
+                  <span class="price-value">$<span class="plan-price">0</span></span>
+                  <small>/month</small>
+                </p>
+                <ul class="price-list">
+                  <li>2 active campaigns</li>
+                  <li>Basic messaging</li>
+                  <li>Standard support</li>
+                </ul>
+                <a href="./pages/brand-auth.html" class="btn btn-ghost btn-block">
+                  Get Started
+                </a>
+              </article>
+
+              <!-- Growth Plan (Featured) -->
+              <article class="price-card featured">
+                <p class="price-badge">Most Popular</p>
+                <h3>Growth</h3>
+                <p class="price-tag">
+                  <span class="price-value">$<span class="plan-price">49</span></span>
+                  <small>/month</small>
+                </p>
+                <ul class="price-list">
+                  <li>Unlimited campaigns</li>
+                  <li>Shortlist + analytics</li>
+                  <li>Priority support</li>
+                </ul>
+                <a href="./pages/brand-auth.html" class="btn btn-primary btn-block">
+                  Choose Growth
+                </a>
+              </article>
+
+              <!-- Scale Plan -->
+              <article class="price-card">
+                <h3>Scale</h3>
+                <p class="price-tag">
+                  <span class="price-value">$<span class="plan-price">129</span></span>
+                  <small>/month</small>
+                </p>
+                <ul class="price-list">
+                  <li>Multi-team management</li>
+                  <li>Advanced insights</li>
+                  <li>Dedicated success support</li>
+                </ul>
+                <a href="./pages/brand-auth.html" class="btn btn-secondary btn-block">
+                  Choose Scale
+                </a>
+              </article>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="container">
+        <div class="footer-content">
+          <div class="footer-section">
+            <h3>Smart Influencing</h3>
+            <p>Pure HTML, CSS, and JavaScript frontend built for brand and creator collaboration at scale.</p>
+          </div>
+          <div class="footer-section">
+            <h4>Access</h4>
+            <ul>
+              <li>
+                <a href="./pages/brand-auth.html">Brand Login</a>
+              </li>
+              <li>
+                <a href="./pages/influencer-auth.html">Influencer Login</a>
+              </li>
+              <li>
+                <a href="./pricing.html">Pricing Page</a>
+              </li>
+            </ul>
+          </div>
+          <div class="footer-section">
+            <h4>Connect</h4>
+            <div class="social-links">
+              <a href="#">
+                <i class="fab fa-facebook"></i>
+              </a>
+              <a href="#">
+                <i class="fab fa-twitter"></i>
+              </a>
+              <a href="#">
+                <i class="fab fa-instagram"></i>
+              </a>
+              <a href="#">
+                <i class="fab fa-linkedin"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+        <div class="footer-bottom">
+          <p>&copy; 2026 Smart Influencing. All rights reserved.</p>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <script src="./js/main.js"></script>
+  <script>
+    // Pricing page script
+    document.addEventListener('DOMContentLoaded', function() {
+      const billingBtns = document.querySelectorAll('.billing-btn');
+      const plans = {
+        monthly: {
+          0: '0',
+          49: '49',
+          129: '129'
+        },
+        yearly: {
+          0: '0',
+          49: '39',
+          129: '103'
+        }
+      };
+
+      billingBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+          const mode = this.dataset.mode;
+          
+          // Update active button
+          billingBtns.forEach(b => b.classList.remove('active'));
+          this.classList.add('active');
+
+          // Update prices
+          const priceElements = document.querySelectorAll('.plan-price');
+          const originalPrices = [0, 49, 129];
+          priceElements.forEach((el, idx) => {
+            el.textContent = plans[mode][originalPrices[idx]];
+          });
+
+          // Update billing text
+          const smallTexts = document.querySelectorAll('.price-tag small');
+          smallTexts.forEach(small => {
+            if (mode === 'yearly') {
+              small.textContent = '/month (yearly billing)';
+            } else {
+              small.textContent = '/month';
+            }
+          });
+        });
+      });
+    });
+  </script>
+</body>
+</html>

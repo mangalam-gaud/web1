@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Influencer Dashboard | Smart Influencing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../dist/css/style.min.css">
+    <link rel="stylesheet" href="../dist/css/dashboard.min.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-star"></i> Smart Influencing</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-tab="dashboard">
+                    <i class="fas fa-home"></i> Dashboard
+                </a>
+                <a href="#" class="nav-item" data-tab="campaigns">
+                    <i class="fas fa-briefcase"></i> Browse Campaigns
+                </a>
+                <a href="#" class="nav-item" data-tab="applied-campaigns">
+                    <i class="fas fa-heart"></i> My Applications <span class="badge" id="appBadge">0</span>
+                </a>
+                <a href="#" class="nav-item" data-tab="profile">
+                    <i class="fas fa-user"></i> My Profile
+                </a>
+                <a href="#" class="nav-item" data-tab="wallet">
+                    <i class="fas fa-wallet"></i> Wallet & Earnings
+                </a>
+                <a href="#" class="nav-item" data-tab="messages">
+                    <i class="fas fa-comments"></i> Messages
+                </a>
+                <a href="#" class="nav-item" data-tab="notifications">
+                    <i class="fas fa-bell"></i> Notifications <span class="badge" id="notifBadge" style="display:none;">0</span>
+                </a>
+            </nav>
+            <button onclick="logout()" class="btn-logout">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </button>
+        </aside>
+        <div class="sidebar-backdrop"></div>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Top Header -->
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="menu-toggle" type="button" aria-label="Open navigation">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h1 id="pageTitle">Dashboard</h1>
+                </div>
+                <div class="header-right">
+                    <div class="profile-menu">
+                        <img id="profileImg" src="https://via.placeholder.com/40" alt="Profile">
+                        <div class="dropdown">
+                            <a href="#" onclick="goToProfileTab()">View Profile</a>
+                            <a href="#" onclick="logout()">Logout</a>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="content">
+                <!-- Dashboard Tab -->
+                <div class="tab-content active" id="dashboard-tab">
+                    <div class="dashboard-hero influencer-hero">
+                        <div class="dashboard-hero-copy">
+                            <p class="eyebrow">Creator Command Center</p>
+                            <h2>Hello, <span id="influencerHeroName">Creator</span></h2>
+                            <p>Discover better-fit brand deals, manage your applications, and keep your profile market-ready.</p>
+                            <div class="hero-actions">
+                                <button class="btn btn-primary" onclick="switchTab('campaigns')">Browse Campaigns</button>
+                                <button class="btn btn-ghost" onclick="switchTab('messages')">Open Messages</button>
+                            </div>
+                        </div>
+                        <div class="dashboard-hero-kpis">
+                            <div class="hero-kpi">
+                                <span id="influencerHeroWaiting">0</span>
+                                <small>Waiting</small>
+                            </div>
+                            <div class="hero-kpi">
+                                <span id="influencerHeroAccepted">0</span>
+                                <small>Accepted</small>
+                            </div>
+                            <div class="hero-kpi">
+                                <span id="influencerHeroOpen">0</span>
+                                <small>Open Opportunities</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-briefcase"></i></div>
+                            <div class="stat-content">
+                                <h3>Active Applications</h3>
+                                <p id="activeCampaigns" class="stat-number">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-check-circle"></i></div>
+                            <div class="stat-content">
+                                <h3>Accepted Campaigns</h3>
+                                <p id="acceptedCampaigns" class="stat-number">0</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                            <div class="stat-content">
+                                <h3>Total Earnings</h3>
+                                <p class="stat-number" id="totalEarnings">$0.00</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon"><i class="fas fa-star"></i></div>
+                            <div class="stat-content">
+                                <h3>Your Rating</h3>
+                                <p class="stat-number" id="userRating">0.0</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="insight-layout">
+                        <div class="insight-card">
+                            <h3>Application Performance</h3>
+                            <div class="progress-row">
+                                <label>Acceptance Rate</label>
+                                <div class="progress-track"><span id="influencerAcceptBar"></span></div>
+                                <strong id="influencerAcceptText">0%</strong>
+                            </div>
+                            <div class="progress-row">
+                                <label>Profile Strength</label>
+                                <div class="progress-track"><span id="influencerProfileBar"></span></div>
+                                <strong id="influencerProfileText">0%</strong>
+                            </div>
+                        </div>
+                        <div class="insight-card">
+                            <h3>Growth Checklist</h3>
+                            <ul class="insight-list">
+                                <li><i class="fas fa-id-card"></i> Keep your bio and portfolio links updated.</li>
+                                <li><i class="fas fa-paper-plane"></i> Apply to relevant campaigns daily.</li>
+                                <li><i class="fas fa-bolt"></i> Respond quickly to brand messages.</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="ops-layout">
+                        <div class="ops-card">
+                            <h3>Creator Momentum</h3>
+                            <div class="ops-stat-row">
+                                <span>Total Applications</span>
+                                <strong id="creatorMomentumApplied">0</strong>
+                            </div>
+                            <div class="ops-stat-row">
+                                <span>Accepted Deals</span>
+                                <strong id="creatorMomentumAccepted">0</strong>
+                            </div>
+                            <div class="ops-stat-row">
+                                <span>Waiting Response</span>
+                                <strong id="creatorMomentumWaiting">0</strong>
+                            </div>
+                            <div class="ops-stat-row">
+                                <span>Profile Strength</span>
+                                <strong id="creatorMomentumProfile">0%</strong>
+                            </div>
+                        </div>
+                        <div class="ops-card">
+                            <h3>Earnings Potential</h3>
+                            <div class="ops-progress-row">
+                                <label>Current Acceptance Rate</label>
+                                <div class="progress-track"><span id="creatorAcceptanceBar"></span></div>
+                                <strong id="creatorAcceptanceText">0%</strong>
+                            </div>
+                            <div class="ops-progress-row">
+                                <label>Accepted Budget Value</label>
+                                <div class="progress-track"><span id="creatorBudgetBar"></span></div>
+                                <strong id="creatorBudgetText">$0</strong>
+                            </div>
+                        </div>
+                        <div class="ops-card checklist-card">
+                            <h3>Growth Checklist</h3>
+                            <ul class="ops-checklist">
+                                <li><i class="fas fa-check-circle"></i> Keep bio, experience, and rates updated</li>
+                                <li><i class="fas fa-check-circle"></i> Apply only to high-fit campaigns</li>
+                                <li><i class="fas fa-check-circle"></i> Share progress updates after acceptance</li>
+                                <li><i class="fas fa-check-circle"></i> Reply quickly to brand messages</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <div class="recent-section">
+                        <h2>Recent Campaigns</h2>
+                        <div id="recentCampaigns" class="campaigns-list">
+                            <p class="empty-state">No campaigns found</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Browse Campaigns Tab -->
+                <div class="tab-content" id="campaigns-tab">
+                    <div class="section-header">
+                        <h2>Available Campaigns</h2>
+                        <div class="filter-bar">
+                            <input type="text" id="searchCampaigns" placeholder="Search campaigns..." class="filter-input">
+                        </div>
+                    </div>
+                    <div id="campaignsList" class="campaigns-list">
+                        <p class="empty-state">Loading campaigns...</p>
+                    </div>
+                </div>
+
+                <!-- Applied Campaigns Tab -->
+                <div class="tab-content" id="applied-campaigns-tab">
+                    <div class="section-header">
+                        <h2>My Applications</h2>
+                    </div>
+                    <div id="appliedCampaignsList" class="campaigns-list">
+                        <p class="empty-state">You haven't applied for any campaigns yet</p>
+                    </div>
+                </div>
+
+                <!-- Profile Tab -->
+                <div class="tab-content" id="profile-tab">
+                    <div class="profile-layout">
+                        <div class="profile-card">
+                            <div class="profile-header">
+                                <img id="profileImageLarge" src="https://via.placeholder.com/120" alt="Profile">
+                                <div class="profile-info">
+                                    <h2 id="profileName">Your Name</h2>
+                                    <p id="profileEmail">email@example.com</p>
+                                </div>
+                            </div>
+
+                            <form onsubmit="handleProfileUpdate(event)" class="profile-form">
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Full Name</label>
+                                        <input type="text" id="editName" required>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Contact Phone</label>
+                                        <input type="tel" id="editContact">
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>About You</label>
+                                    <textarea id="editAbout" rows="4" placeholder="Tell brands about yourself..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Experience</label>
+                                    <textarea id="editExperience" rows="3" placeholder="Describe your experience and achievements..."></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label>Hourly Rate ($)</label>
+                                    <input type="number" id="editRate" step="0.01" min="0">
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Instagram Handle</label>
+                                        <input type="text" id="editInstagram" placeholder="@yourhandle">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>YouTube Channel</label>
+                                        <input type="text" id="editYoutube" placeholder="Channel URL">
+                                    </div>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Facebook</label>
+                                        <input type="text" id="editFacebook" placeholder="Facebook URL">
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Twitter Handle</label>
+                                        <input type="text" id="editTwitter" placeholder="@handle">
+                                    </div>
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Save Profile</button>
+                            </form>
+                        </div>
+
+                        <aside class="profile-side-stack">
+                            <div class="profile-side-card">
+                                <h3>Profile Strength</h3>
+                                <div class="profile-strength-value">
+                                    <strong id="influencerProfileStrengthValue">0%</strong>
+                                    <span id="influencerProfileTier">Needs Improvement</span>
+                                </div>
+                                <div class="progress-track profile-strength-track">
+                                    <span id="influencerProfileStrengthBar" style="width:0%"></span>
+                                </div>
+                                <p>Higher profile quality improves your campaign acceptance rate.</p>
+                            </div>
+
+                            <div class="profile-side-card">
+                                <h3>Public Preview</h3>
+                                <div class="profile-preview-block">
+                                    <p class="preview-title" id="influencerPreviewName">Your Name</p>
+                                    <p class="preview-muted" id="influencerPreviewAbout">Add a clear creator bio to attract premium brands.</p>
+                                    <div class="preview-meta-grid">
+                                        <div>
+                                            <span>Hourly Rate</span>
+                                            <strong id="influencerPreviewRate">$0.00</strong>
+                                        </div>
+                                        <div>
+                                            <span>Experience</span>
+                                            <strong id="influencerPreviewExperience">Not set</strong>
+                                        </div>
+                                    </div>
+                                    <div class="preview-social-row">
+                                        <span id="influencerPreviewInstagram">Instagram: Not linked</span>
+                                        <span id="influencerPreviewYoutube">YouTube: Not linked</span>
+                                        <span id="influencerPreviewFacebook">Facebook: Not linked</span>
+                                        <span id="influencerPreviewTwitter">Twitter: Not linked</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </aside>
+                    </div>
+                </div>
+
+                <!-- Wallet Tab -->
+                <div class="tab-content" id="wallet-tab">
+                    <div class="wallet-card">
+                        <div class="earnings-section">
+                            <h2>Wallet & Earnings</h2>
+                            <div class="earnings-display">
+                                <h3>Total Earnings</h3>
+                                <p class="large-amount" id="walletEarnings">$0.00</p>
+                            </div>
+                        </div>
+
+                        <div class="bank-details">
+                            <h3>Bank Account Details</h3>
+                            <form onsubmit="handleWalletUpdate(event)">
+                                <div class="form-group">
+                                    <label>Account Number</label>
+                                    <input type="text" id="accountNumber" placeholder="Your account number">
+                                </div>
+                                <div class="form-group">
+                                    <label>IFSC Code</label>
+                                    <input type="text" id="ifscCode" placeholder="Bank IFSC code">
+                                </div>
+                                <button type="submit" class="btn btn-primary">Update Bank Details</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Tab -->
+                <div class="tab-content" id="messages-tab">
+                    <div class="messages-container">
+                        <div class="chat-list">
+                            <h3>Conversations</h3>
+                            <div id="chatsList" class="chats">
+                                <p class="empty-state">No conversations yet</p>
+                            </div>
+                        </div>
+                        <div class="chat-window">
+                            <div id="noChat" class="no-chat">
+                                <p>Select a conversation to start messaging</p>
+                            </div>
+                            <div id="chatBox" class="chat-box hidden">
+                                <div class="chat-header">
+                                    <h3 id="chatTitle">Chat</h3>
+                                    <button type="button" id="chatProfileBtn" class="btn btn-secondary btn-sm hidden" onclick="openActiveChatProfile()">View Brand Profile</button>
+                                </div>
+                                <div id="messagesContainer" class="messages">
+                                </div>
+                                <form onsubmit="handleSendMessage(event)" class="message-form">
+                                    <input type="text" id="messageInput" placeholder="Type a message..." required>
+                                    <button type="submit" class="btn btn-primary">Send</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-content" id="notifications-tab">
+                    <div class="section-header">
+                        <h2>Notifications</h2>
+                        <button class="btn btn-secondary btn-sm" onclick="markAllNotificationsRead()">Mark all as read</button>
+                    </div>
+                    <div id="notificationsList" class="insight-card">
+                        <p class="empty-state">No notifications yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="quick-dock" aria-label="Quick actions">
+                <button type="button" class="quick-dock-btn" onclick="switchTab('dashboard')"><i class="fas fa-home"></i><span>Home</span></button>
+                <button type="button" class="quick-dock-btn" onclick="switchTab('campaigns')"><i class="fas fa-bullseye"></i><span>Campaigns</span></button>
+                <button type="button" class="quick-dock-btn" onclick="switchTab('messages')"><i class="fas fa-comments"></i><span>Messages</span></button>
+                <button type="button" class="quick-dock-btn" onclick="switchTab('profile')"><i class="fas fa-user"></i><span>Profile</span></button>
+            </div>
+        </main>
+    </div>
+
+    <!-- Campaign Modal -->
+    <div id="campaignModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeCampaignModal()">&times;</span>
+            <div id="campaignDetails"></div>
+        </div>
+    </div>
+
+    <div id="brandModal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-modal" onclick="closeBrandModal()">&times;</span>
+            <div id="brandDetails"></div>
+        </div>
+    </div>
+
+    <script src="../js/main.js"></script>
+    <script src="../js/influencer-dashboard.js"></script>
+</body>
+</html>
+
